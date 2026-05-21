@@ -23,8 +23,8 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 
 | Livrable | Statut |
 |---|---|
-| MCD officiel ([`wms-mcd.md`](wms-mcd.md)) | ✅ v3.1-final — convergence matérialisée à la racine |
-| MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte V3 officielle |
+| MCD officiel ([`wms-mcd.md`](wms-mcd.md)) | ✅ v4.0-final — revue critique 5 attaques soutenance + arbitrages Ianis |
+| MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte V4 officielle |
 | MLD | ⏳ à reprendre |
 | DDL MariaDB 11.4 LTS | ⏳ à reprendre |
 | Justification SGBD | ⏳ |
@@ -40,9 +40,10 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 ## Décisions de cadrage
 
 - **SGBD** : MariaDB 11.4 LTS (justification à formaliser).
-- **MCD V3 officielle à 7 entités** : SITE, EMPLACEMENT, ARTICLE, STOCK, UTILISATEUR, MOUVEMENT, CLIENT. Modèle 14 entités (lots/FEFO, commandes, expéditions, transporteurs) repoussé en évolution fonctionnelle.
-- **Multi-tenant** : verrouillé par l'identifiant composite `ARTICLE (CODE_CLIENT, REFERENCE)`, puis par FK composite `(id_article, id_client)` depuis `STOCK` et `MOUVEMENT` au MLD/DDL.
-- **Rattachement site** : `STOCK` hérite du site via `EMPLACEMENT`; `MOUVEMENT` dérive son site via l'emplacement de départ ou d'arrivée.
+- **MCD V4 officielle à 8 entités** : SITE, EMPLACEMENT, ARTICLE, FOURNISSEUR, STOCK, UTILISATEUR, MOUVEMENT, CLIENT. Modèle 14 entités (lots/FEFO, commandes, expéditions, transporteurs) repoussé en évolution fonctionnelle.
+- **Multi-tenant double verrou** : (a) association `realise_pour CLIENT-MOUVEMENT` au MCD pour visibilité ; (b) FK composite `(id_article, id_client)` depuis `STOCK` et `MOUVEMENT` vers `articles(id_article, id_client)` (option D) au MLD/DDL.
+- **Rattachement site** : `STOCK` hérite du site via `EMPLACEMENT` ; `MOUVEMENT` porte un `id_site` dénormalisé garantissant TRANSFERT intra-site par FK composite déclarative `(id_depart, id_site) → emplacements(id_emplacement, id_site)`.
+- **Fournisseur** : référentiel mutualisé NTL (entité `FOURNISSEUR`), association `fournit` optionnelle (`01 ARTICLE`).
 
 ## Ressources
 
