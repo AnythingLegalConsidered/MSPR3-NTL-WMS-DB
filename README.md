@@ -23,8 +23,8 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 
 | Livrable | Statut |
 |---|---|
-| MCD ([`wms-mcd.md`](wms-mcd.md)) | ✅ v0.7 — 7 entités, MVP cohérent |
-| MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte |
+| MCD V3-GPT ([`propositions/wms-mcd-v3-gpt.md`](propositions/wms-mcd-v3-gpt.md)) | ✅ v3.0-gpt — convergence V2 Claude/GPT |
+| MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte V3-GPT |
 | MLD | ⏳ à reprendre |
 | DDL MariaDB 11.4 LTS | ⏳ à reprendre |
 | Justification SGBD | ⏳ |
@@ -40,8 +40,9 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 ## Décisions de cadrage
 
 - **SGBD** : MariaDB 11.4 LTS (justification à formaliser).
-- **MCD V1 simplifié à 7 entités** : SITE, EMPLACEMENT, ARTICLE, STOCK, UTILISATEUR, MOUVEMENT, CLIENT. Modèle 14 entités (lots/FEFO, commandes, expéditions, transporteurs) repoussé en V2.
-- **Multi-tenant** : verrouillé en BDD via FK composite `(id_article, id_client)` sur `STOCK` et `MOUVEMENT`.
+- **MCD V3-GPT à 7 entités** : SITE, EMPLACEMENT, ARTICLE, STOCK, UTILISATEUR, MOUVEMENT, CLIENT. Modèle 14 entités (lots/FEFO, commandes, expéditions, transporteurs) repoussé en évolution fonctionnelle.
+- **Multi-tenant** : verrouillé par l'identifiant composite `ARTICLE (CODE_CLIENT, REFERENCE)`, puis par FK composite `(id_article, id_client)` depuis `STOCK` et `MOUVEMENT` au MLD/DDL.
+- **Rattachement site** : `STOCK` hérite du site via `EMPLACEMENT`; `MOUVEMENT` dérive son site via l'emplacement de départ ou d'arrivée.
 
 ## Ressources
 
