@@ -44,7 +44,7 @@ Détail et justifications → [`FAQ.md`](FAQ.md).
 
 | Livrable | Point d'entrée pour démarrer | Contraintes à respecter |
 |---|---|---|
-| DDL MariaDB 11.4 | [`wms-mld.md`](wms-mld.md) §2 à §7 | utf8mb4, InnoDB, ordre de création (clients → fournisseurs → sites → articles → emplacements → utilisateurs → stocks → mouvements) |
+| DDL MariaDB 11.4 | ✅ draft v1 — [`ddl/wms-schema.sql`](ddl/wms-schema.sql) + [`wms-ddl.md`](wms-ddl.md). Reste : exécuter sur MariaDB 11.4, écrire tests, écrire seed |
 | Justification SGBD | à créer | comparatif MariaDB / PostgreSQL / MySQL sur critères : LTS, Galera (HA), licence, écosystème |
 | HA/PRA Galera | à créer | RTO 1h / RPO 15min. Cluster Galera 3 nœuds minimum. Sauvegardes mariabackup. |
 | Sécurité accès | à créer | matrice rôles → privilèges (cariste, opérateur, admin). TLS. Comptes nominatifs. |

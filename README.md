@@ -25,8 +25,8 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 |---|---|
 | MCD officiel ([`wms-mcd.md`](wms-mcd.md)) | ✅ v4.0-final — revue critique 5 attaques soutenance + arbitrages Ianis |
 | MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte V4 officielle |
-| MLD | ⏳ à reprendre |
-| DDL MariaDB 11.4 LTS | ⏳ à reprendre |
+| MLD ([`wms-mld.md`](wms-mld.md)) | 🟡 draft v1 |
+| DDL MariaDB 11.4 LTS ([`wms-ddl.md`](wms-ddl.md) + [`ddl/wms-schema.sql`](ddl/wms-schema.sql)) | 🟡 draft v1 — exécution non testée |
 | Justification SGBD | ⏳ |
 | HA/PRA (Galera) | ⏳ |
 | Sécurité accès | ⏳ |
