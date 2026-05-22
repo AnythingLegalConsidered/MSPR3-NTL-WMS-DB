@@ -120,12 +120,29 @@ Ces tests seront formalisés dans `ddl/tests/` (livrable suivant).
 | `DECIMAL` pour poids/dimensions | pas de perte de précision (≠ FLOAT) | `wms-mld.md` §2.3 |
 | FK toutes en `ON DELETE RESTRICT` | protection de l'historique : suppression métier = soft-delete applicatif | `wms-mld.md` §4 |
 | Exception `articles.id_fournisseur` en `SET NULL` | fournisseur supprimé ne doit pas bloquer un article (cardinalité `01`) | `wms-mld.md` §4 |
-| CHECK nommé `ck_mvt_src_dst` | XOR conditionnel non Merisable, porté au DDL | `wms-mld.md` §6.1 |
+| Règle `ck_mvt_src_dst` portée par **triggers** au lieu de CHECK | bug parser MariaDB 11.4.10 : conflit entre FK composites `(id_depart, id_site)` / `(id_arrivee, id_site)` et tout CHECK référençant ces colonnes. FK composites prioritaires (verrouillent TRANSFERT intra-site), XOR XOR matérialisé par 2 triggers `BEFORE INSERT` + `BEFORE UPDATE` avec `SIGNAL SQLSTATE '45000'`. Sémantique identique. | §5.bis ci-dessous |
+
+### 5.bis Bug parser MariaDB 11.4 — investigation
+
+**Symptôme** : `ERROR 1901 (HY000): Function or expression 'id_depart' cannot be used in the CHECK clause of 'ck_mvt_src_dst'`.
+
+**Reproduction** : sur MariaDB 11.4.10-MariaDB-ubu2404, déclarer un CHECK référençant `id_depart` ou `id_arrivee` sur la table `mouvements` qui possède les FK composites `(id_depart, id_site) → emplacements` et `(id_arrivee, id_site) → emplacements` est systématiquement rejeté — que ce soit inline dans le `CREATE TABLE` ou via `ALTER TABLE` après création. Le bug est insensible à l'ordre des contraintes, à la complexité du CHECK (même un CHECK trivial à 1 branche est rejeté), et persiste après `DROP CONSTRAINT` puis ré-ajout.
+
+**Tests réalisés** :
+- CHECK seul sur table simplifiée (sans FK composites) → OK
+- CHECK + FK composites sur table simplifiée (sans timestamps) → OK
+- CHECK + FK composites + timestamps sur table complète → KO
+- Découpage en 4 CHECK par valeur d'ENUM → KO
+- Drop FK composites → ajout CHECK → re-add FK composites → CHECK invalidé au re-add
+
+**Arbitrage** : conserver les FK composites (décision V4 verrouillée, garantie déclarative TRANSFERT intra-site) et porter la règle XOR via triggers. Le coût est limité : 2 triggers symétriques BEFORE INSERT / BEFORE UPDATE, sémantique identique au CHECK initialement prévu (cf. `wms-mcd.md` §4 et `wms-mld.md` §6.1).
+
+**Évolution V2** : retester sur futures versions MariaDB (11.5+, 12.x) ; si le bug est corrigé, revenir au CHECK déclaratif.
 
 ## 6. Limites connues
 
 - **Pas de partitioning** sur `mouvements` : croissance linéaire, à reconsidérer au-delà de ~10M lignes (V2).
-- **Pas de trigger** : la dénormalisation `mouvements.id_site` doit être renseignée correctement par l'application. Risque d'incohérence si update SQL manuel direct sans passer par l'app. Trigger BEFORE INSERT/UPDATE envisageable en V2 si nécessaire.
+- **2 triggers sur `mouvements`** (forcés par bug parser MariaDB 11.4, cf. §5.bis) : `tg_mvt_src_dst_ins` et `tg_mvt_src_dst_upd`. Pas de trigger sur la dénormalisation `mouvements.id_site` (renseigné par l'application). Risque d'incohérence si update SQL manuel direct sans passer par l'app — trigger additionnel envisageable en V2.
 - **ENUM rigide** : toute nouvelle valeur de statut/rôle/type nécessite `ALTER TABLE` (verrou court). Bascule vers tables de référence prévue V2 si volatilité prouvée.
 - **Pas de seed data** : le script crée le schéma vide. Un script `ddl/seed.sql` avec données NTL fictives est à produire pour la démo soutenance.
 

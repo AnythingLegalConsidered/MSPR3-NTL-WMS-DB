@@ -159,7 +159,8 @@ CREATE TABLE stocks (
 --    - FK composites TRANSFERT intra-site :
 --        (id_depart,  id_site) → emplacements (id_emplacement, id_site)
 --        (id_arrivee, id_site) → emplacements (id_emplacement, id_site)
---    - CHECK ck_mvt_src_dst : XOR conditionnel selon type_mouvement
+--    - CHECK ck_mvt_src_dst : XOR conditionnel selon type_mouvement,
+--      ajouté via ALTER TABLE après création (workaround bug parser MariaDB 11.4)
 -- -----------------------------------------------------------------------------
 CREATE TABLE mouvements (
   id_mouvement    INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -192,20 +193,70 @@ CREATE TABLE mouvements (
   CONSTRAINT fk_mouvements_utilisateur
     FOREIGN KEY (id_utilisateur) REFERENCES utilisateurs (id_utilisateur)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT ck_mouvements_quantite CHECK (quantite > 0),
-  CONSTRAINT ck_mvt_src_dst CHECK (
-       (type_mouvement = 'ENTREE'
-          AND id_depart IS NULL AND id_arrivee IS NOT NULL)
-    OR (type_mouvement = 'SORTIE'
-          AND id_depart IS NOT NULL AND id_arrivee IS NULL)
-    OR (type_mouvement = 'TRANSFERT'
-          AND id_depart IS NOT NULL AND id_arrivee IS NOT NULL
-          AND id_depart <> id_arrivee)
-    OR (type_mouvement = 'AJUSTEMENT'
-          AND ((id_depart IS NOT NULL AND id_arrivee IS NULL)
-            OR (id_depart IS NULL     AND id_arrivee IS NOT NULL)))
-  )
+  CONSTRAINT ck_mouvements_quantite CHECK (quantite > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Règle XOR ck_mvt_src_dst portée par 2 triggers (BEFORE INSERT + BEFORE UPDATE)
+--
+-- Bug parser MariaDB 11.4.10 confirmé : tout CHECK référençant id_depart ou
+-- id_arrivee sur la table mouvements est rejeté avec ERROR 1901 dès lors
+-- que les FK composites (id_depart, id_site) → emplacements et
+-- (id_arrivee, id_site) → emplacements sont déclarées. Les FK composites
+-- étant critiques pour la garantie déclarative TRANSFERT intra-site
+-- (décision V4 verrouillée), on porte la règle XOR via triggers SIGNAL.
+--
+-- Sémantique identique au CHECK initialement prévu :
+--   ENTREE     → id_depart NULL, id_arrivee NOT NULL
+--   SORTIE     → id_depart NOT NULL, id_arrivee NULL
+--   TRANSFERT  → les deux NOT NULL, distincts (intra-site garanti par FK)
+--   AJUSTEMENT → XOR (exactement un des deux)
+-- -----------------------------------------------------------------------------
+DELIMITER //
+
+CREATE TRIGGER tg_mvt_src_dst_ins
+BEFORE INSERT ON mouvements
+FOR EACH ROW
+BEGIN
+  IF NOT (
+       (NEW.type_mouvement = 'ENTREE'
+          AND NEW.id_depart IS NULL AND NEW.id_arrivee IS NOT NULL)
+    OR (NEW.type_mouvement = 'SORTIE'
+          AND NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NULL)
+    OR (NEW.type_mouvement = 'TRANSFERT'
+          AND NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NOT NULL
+          AND NEW.id_depart <> NEW.id_arrivee)
+    OR (NEW.type_mouvement = 'AJUSTEMENT'
+          AND ((NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NULL)
+            OR (NEW.id_depart IS NULL     AND NEW.id_arrivee IS NOT NULL)))
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'ck_mvt_src_dst: id_depart/id_arrivee invalides pour ce type_mouvement';
+  END IF;
+END//
+
+CREATE TRIGGER tg_mvt_src_dst_upd
+BEFORE UPDATE ON mouvements
+FOR EACH ROW
+BEGIN
+  IF NOT (
+       (NEW.type_mouvement = 'ENTREE'
+          AND NEW.id_depart IS NULL AND NEW.id_arrivee IS NOT NULL)
+    OR (NEW.type_mouvement = 'SORTIE'
+          AND NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NULL)
+    OR (NEW.type_mouvement = 'TRANSFERT'
+          AND NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NOT NULL
+          AND NEW.id_depart <> NEW.id_arrivee)
+    OR (NEW.type_mouvement = 'AJUSTEMENT'
+          AND ((NEW.id_depart IS NOT NULL AND NEW.id_arrivee IS NULL)
+            OR (NEW.id_depart IS NULL     AND NEW.id_arrivee IS NOT NULL)))
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'ck_mvt_src_dst: id_depart/id_arrivee invalides pour ce type_mouvement';
+  END IF;
+END//
+
+DELIMITER ;
 
 -- =============================================================================
 -- Index additionnels (reporting / audit) — cf. wms-mld.md §7

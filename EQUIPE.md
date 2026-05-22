@@ -24,7 +24,7 @@ Ces décisions sont **tranchées**. Si tu penses qu'une est fausse, ouvre la dis
 - **Multi-tenant** : FK composite `(id_article, id_client)` (« option D ») + association `realise_pour` visible au MCD.
 - **TRANSFERT intra-site** : garanti déclarativement par dénormalisation `mouvements.id_site` + FK composites vers `emplacements`.
 - **Surrogate keys** `id_*` partout au MLD, code métier conservé en `UNIQUE`.
-- **Pas de trigger** en V1 : tout passe par FK composites + CHECK.
+- **Triggers minimisés** : règles d'intégrité portées par FK composites + CHECK partout où possible. Exception : 2 triggers sur `mouvements` (`tg_mvt_src_dst_ins`, `tg_mvt_src_dst_upd`) forcés par un bug parser MariaDB 11.4 — cf. `wms-ddl.md` §5.bis.
 
 Détail et justifications → [`FAQ.md`](FAQ.md).
 

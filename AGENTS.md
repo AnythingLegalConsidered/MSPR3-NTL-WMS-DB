@@ -13,7 +13,7 @@ MSPR3 EPSI Nantes — conception base de données WMS pour NordTransit Logistics
 - TRANSFERT intra-site : dénormalisation `mouvements.id_site` + FK composites
 - Surrogate keys `id_*` au MLD, code métier en UNIQUE
 - ENUM pour domaines de valeurs, CHECK pour contraintes conditionnelles
-- Pas de trigger en V1
+- Triggers minimisés (exception : `ck_mvt_src_dst` porté par triggers à cause d'un bug parser MariaDB 11.4 — cf. `wms-ddl.md` §5.bis)
 
 Si une décision semble incohérente : **propose un workaround MLD/DDL, ne rouvre pas le MCD**.
 

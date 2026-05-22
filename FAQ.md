@@ -39,6 +39,9 @@ ENUM = compact, contrôlé par le moteur, équivalent fonctionnel à `CHECK IN (
 ### Pourquoi pas de trigger pour TRANSFERT intra-site ?
 Triggers = magie cachée, difficiles à auditer, alourdissent la maintenance. La FK composite `(id_depart, id_site)` + `(id_arrivee, id_site)` vers `emplacements(id_emplacement, id_site)` donne la même garantie déclarativement, vérifiée par le moteur. C'est plus propre et plus lisible. → `wms-mld.md` §5
 
+### Mais il y a 2 triggers sur `mouvements`, pourquoi ?
+Forcés par un **bug du parser MariaDB 11.4** identifié au moment de l'exécution du DDL : tout `CHECK` qui référence `id_depart` ou `id_arrivee` sur la table `mouvements` est rejeté avec `ERROR 1901` à cause de l'interaction avec les FK composites. Les FK composites étant prioritaires (verrouillent l'isolation TRANSFERT intra-site, décision V4 verrouillée), on a porté la règle XOR `ck_mvt_src_dst` via 2 triggers `BEFORE INSERT / BEFORE UPDATE` avec `SIGNAL SQLSTATE '45000'`. Sémantique identique au CHECK initial. → `wms-ddl.md` §5.bis
+
 ### Pourquoi `ON DELETE RESTRICT` partout au lieu de CASCADE ?
 Parce qu'on ne veut **jamais** détruire un historique de mouvements en supprimant un client ou un article. Une suppression métier passe par soft-delete applicatif (statut, archivage). Exception : `articles.id_fournisseur` en `SET NULL` (un fournisseur supprimé ne doit pas bloquer un article). → `wms-mld.md` §4
 
