@@ -1,6 +1,7 @@
 # Note Comité de Direction — Sécurisation de la base WMS
 
 **Émetteur** : DSI / Équipe projet WMS-DB
+
 **Destinataires** : Comité de direction NordTransit Logistics
 **Date** : 2026-05-22
 **Objet** : Risques cyber sur la base de données WMS, impacts opérationnels, plan d'action proposé
