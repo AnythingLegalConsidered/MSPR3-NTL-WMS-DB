@@ -24,7 +24,7 @@ Ces décisions sont **tranchées**. Si tu penses qu'une est fausse, ouvre la dis
 - **Multi-tenant** : FK composite `(id_article, id_client)` (« option D ») + association `realise_pour` visible au MCD.
 - **TRANSFERT intra-site** : garanti déclarativement par dénormalisation `mouvements.id_site` + FK composites vers `emplacements`.
 - **Surrogate keys** `id_*` partout au MLD, code métier conservé en `UNIQUE`.
-- **Triggers minimisés** : règles d'intégrité portées par FK composites + CHECK partout où possible. Exception : 2 triggers sur `mouvements` (`tg_mvt_src_dst_ins`, `tg_mvt_src_dst_upd`) forcés par un bug parser MariaDB 11.4 — cf. `wms-ddl.md` §5.bis.
+- **Triggers minimisés** : règles d'intégrité portées par FK composites + CHECK partout où possible. Exception : 2 triggers sur `mouvements` (`tg_mvt_src_dst_ins`, `tg_mvt_src_dst_upd`) forcés par un bug parser MariaDB 11.4 — cf. [`01-architecture-technique/ddl/wms-ddl.md`](01-architecture-technique/ddl/wms-ddl.md) §5.bis et [`decisions/0001-bug-mariadb-check.md`](decisions/0001-bug-mariadb-check.md).
 
 Détail et justifications → [`FAQ.md`](FAQ.md).
 
@@ -32,28 +32,35 @@ Détail et justifications → [`FAQ.md`](FAQ.md).
 
 | Tu cherches… | Va dans |
 |---|---|
-| Le modèle conceptuel officiel | [`wms-mcd.md`](wms-mcd.md) |
-| Le diagramme MCD visuel | [`wms-mcd.svg`](wms-mcd.svg) / [`wms-mcd.png`](wms-mcd.png) |
-| Le modèle logique (tables, FK, contraintes) | [`wms-mld.md`](wms-mld.md) |
-| Le pourquoi d'une décision | [`FAQ.md`](FAQ.md) puis [`convergence/`](convergence/) pour l'historique long |
+| Le modèle conceptuel officiel | [`01-architecture-technique/mcd/wms-mcd.md`](01-architecture-technique/mcd/wms-mcd.md) |
+| Le diagramme MCD visuel | [`01-architecture-technique/mcd/wms-mcd.svg`](01-architecture-technique/mcd/wms-mcd.svg) |
+| Le modèle logique (tables, FK, contraintes) | [`01-architecture-technique/mld/wms-mld.md`](01-architecture-technique/mld/wms-mld.md) |
+| Le DDL exécutable + sa doc | [`01-architecture-technique/ddl/`](01-architecture-technique/ddl/) |
+| Le pourquoi d'une décision (synthèse) | [`07-gestion-projet/journal-decisions.md`](07-gestion-projet/journal-decisions.md) |
+| Les ADR détaillés (problème, options, arbitrage) | [`decisions/`](decisions/) |
+| Les risques projet | [`07-gestion-projet/registre-risques.md`](07-gestion-projet/registre-risques.md) |
+| L'historique des changements | [`CHANGELOG.md`](CHANGELOG.md) |
+| Les attaques jury anticipées + réponses | [`FAQ.md`](FAQ.md) |
+| Interroger une IA sur le projet | [`brief-ia/`](brief-ia/) |
 | Le sujet EPSI | [`ressources/sujet-mspr3.pdf`](ressources/sujet-mspr3.pdf) |
 | La grille d'évaluation jury | [`ressources/grille-evaluation.pdf`](ressources/grille-evaluation.pdf) |
-| L'état des livrables | [`README.md`](README.md) tableau « État » |
+| L'état d'un livrable | `README.md` du dossier `0N-…/` correspondant |
 
 ## Livrables restants
 
-| Livrable | Point d'entrée pour démarrer | Contraintes à respecter |
+Voir le `README.md` de chaque dossier `0N-…/` pour : statut détaillé, contenu attendu, point d'entrée pour démarrer, contraintes à respecter. Synthèse :
+
+| # | Dossier | Statut |
 |---|---|---|
-| DDL MariaDB 11.4 | ✅ draft v1 — [`ddl/wms-schema.sql`](ddl/wms-schema.sql) + [`wms-ddl.md`](wms-ddl.md). Reste : exécuter sur MariaDB 11.4, écrire tests, écrire seed |
-| Justification SGBD | à créer | comparatif MariaDB / PostgreSQL / MySQL sur critères : LTS, Galera (HA), licence, écosystème |
-| HA/PRA Galera | à créer | RTO 1h / RPO 15min. Cluster Galera 3 nœuds minimum. Sauvegardes mariabackup. |
-| Sécurité accès | à créer | matrice rôles → privilèges (cariste, opérateur, admin). TLS. Comptes nominatifs. |
-| Supervision | à créer | 5 KPIs à définir. Outils libres (Zabbix / Prometheus / PMM). |
-| Logs | à créer | binlog + slow query log + audit plugin. Politique rétention. |
-| RunBook exploitation | à créer | procédures : sauvegarde, restauration, failover Galera, rotation logs, ajout nœud |
-| Pilotage projet | à créer | Gantt, planning 19h × 4. Risques. RACI. |
-| Note CODIR | à créer | 1 page, vulgarisation pour direction NTL fictive |
-| Soutenance | à créer | slides + démo. S'appuyer sur [`FAQ.md`](FAQ.md) pour la défense. |
+| 1 | [`01-architecture-technique/`](01-architecture-technique/) | 🟡 MCD ✅ MLD ✅ DDL ✅ — reste justif SGBD + schémas + politiques |
+| 2 | [`02-pra/`](02-pra/) | ⏳ |
+| 3 | [`03-supervision/`](03-supervision/) | ⏳ |
+| 4 | [`04-optimisation/`](04-optimisation/) | ⏳ |
+| 5 | [`05-runbook/`](05-runbook/) | ⏳ |
+| 6 | [`06-analyse-logs/`](06-analyse-logs/) | ⏳ |
+| 7 | [`07-gestion-projet/`](07-gestion-projet/) | 🟡 journal-decisions + registre-risques amorcés |
+| 8 | [`08-note-direction/`](08-note-direction/) | ⏳ |
+| 9 | [`09-soutenance/`](09-soutenance/) | ⏳ |
 
 ## Workflow Git
 
@@ -65,6 +72,6 @@ Détail et justifications → [`FAQ.md`](FAQ.md).
 
 ## Outils
 
-- **MCD** : Mocodo (`python -m mocodo --input wms-mcd.mcd --output_dir . --svg_to png --detect_overlaps`)
+- **MCD** : Mocodo (`cd 01-architecture-technique/mcd && python -m mocodo --input wms-mcd.mcd --output_dir . --svg_to png --detect_overlaps`)
 - **DDL** : à écrire à la main puis tester sur conteneur MariaDB 11.4 local
 - **HA** : Galera (à provisionner sur VMs ou conteneurs)

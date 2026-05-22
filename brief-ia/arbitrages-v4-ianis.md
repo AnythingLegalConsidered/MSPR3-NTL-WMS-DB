@@ -9,9 +9,9 @@ arbitre: "Ianis"
 created: "2026-05-21"
 updated: "2026-05-21"
 related:
-  - "./convergence-mcd-v2.md"
-  - "../wms-mcd.md"
-  - "../propositions/wms-mcd-v3-gpt.md"
+  - "./wms-mcd.md"
+  - "./historique/convergence-mcd-v2.md"
+  - "./historique/wms-mcd-v3-gpt.md"
 ---
 
 # Arbitrages V4 — réponse aux 5 attaques soutenance
@@ -185,9 +185,9 @@ fournit, 0N FOURNISSEUR, 11 ARTICLE
 
 ## Source Mocodo V4 finale
 
-Layout final validé sans chevauchement (`--detect_overlaps`) après revue GPT. Voir [`../wms-mcd.mcd`](../wms-mcd.mcd) pour la source canonique. Les nommages finaux (`stock_de`, `realise_pour`, cardinalité `01` sur `fournit`) ont été appliqués après les arbitrages détaillés en section *Statut*.
+Layout final validé sans chevauchement (`--detect_overlaps`) après revue GPT. Voir [`./wms-mcd.mcd`](./wms-mcd.mcd) pour la source canonique. Les nommages finaux (`stock_de`, `realise_pour`, cardinalité `01` sur `fournit`) ont été appliqués après les arbitrages détaillés en section *Statut*.
 
-> Note : les sections « Décisions » ci-dessus reflètent l'état du draft avant revue GPT (avec `a_pour_stock`, `tracable_pour`, cardinalité `11` sur `fournit`, wording « entité standalone »). Le tableau « Spec V4 finale » et la source [`../wms-mcd.mcd`](../wms-mcd.mcd) reflètent l'état final post-revue.
+> Note : les sections « Décisions » ci-dessus reflètent l'état du draft avant revue GPT (avec `a_pour_stock`, `tracable_pour`, cardinalité `11` sur `fournit`, wording « entité standalone »). Le tableau « Spec V4 finale » et la source [`./wms-mcd.mcd`](./wms-mcd.mcd) reflètent l'état final post-revue.
 
 ---
 
@@ -202,4 +202,4 @@ Layout final validé sans chevauchement (`--detect_overlaps`) après revue GPT. 
   - FOURNISSEUR : **référentiel global NTL** assumé (pas scoped client en V1)
   - TRANSFERT intra-site : **dénormalisation `id_site` sur `mouvements`** (FK composite déclarative, pas trigger)
   - Layout Mocodo : adopté la version GPT (sans chevauchement `--detect_overlaps`)
-- **Matérialisé** : commit V4 dans [`../wms-mcd.md`](../wms-mcd.md), [`../wms-mcd.mcd`](../wms-mcd.mcd), [`../mcd-operationnel.md`](../mcd-operationnel.md), [`../README.md`](../README.md). PNG/SVG/_geo.json régénérés depuis source V4.
+- **Matérialisé** : commit V4 dans [`./wms-mcd.md`](./wms-mcd.md), [`./wms-mcd.mcd`](./wms-mcd.mcd), [`./mcd-operationnel.md`](./mcd-operationnel.md), [`../../README.md`](../../README.md). PNG/SVG/_geo.json régénérés depuis source V4.

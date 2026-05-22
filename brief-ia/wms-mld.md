@@ -11,9 +11,10 @@ ia_used: ["Claude Code"]
 created: "2026-05-22"
 updated: "2026-05-22"
 related:
-  - "./wms-mcd.md"
-  - "./convergence/arbitrages-v4-ianis.md"
-  - "./README.md"
+  - "../mcd/wms-mcd.md"
+  - "../mcd/arbitrages-v4-ianis.md"
+  - "../ddl/wms-ddl.md"
+  - "../../README.md"
 ---
 
 # MLD WMS-DB — passage MCD V4 → modèle relationnel

@@ -7,9 +7,10 @@ updated: "2026-05-22"
 owner: "Ianis"
 impact: "DDL mouvements"
 related:
-  - "../wms-ddl.md"
-  - "../wms-mld.md"
-  - "../ddl/wms-schema.sql"
+  - "../01-architecture-technique/ddl/wms-ddl.md"
+  - "../01-architecture-technique/mld/wms-mld.md"
+  - "../01-architecture-technique/ddl/wms-schema.sql"
+  - "../07-gestion-projet/journal-decisions.md"
 ---
 
 # 0001 — Bug parser MariaDB 11.4 sur les CHECK de `mouvements`
@@ -22,7 +23,7 @@ MariaDB 11.4.10 refuse toute contrainte `CHECK` qui référence `id_depart` ou `
 
 La règle XOR `ck_mvt_src_dst` (qui valide les combinaisons valides selon `type_mouvement` : ENTREE / SORTIE / TRANSFERT / AJUSTEMENT) est portée par **2 triggers** `BEFORE INSERT` et `BEFORE UPDATE` qui lèvent un `SIGNAL SQLSTATE '45000'` si la règle est violée. Sémantique identique au CHECK initialement prévu, validé par 8 tests fonctionnels.
 
-Voir [`../ddl/wms-schema.sql`](../ddl/wms-schema.sql) section trigger et [`../wms-ddl.md`](../wms-ddl.md) §5.bis.
+Voir [`../01-architecture-technique/ddl/wms-schema.sql`](../01-architecture-technique/ddl/wms-schema.sql) section trigger et [`../01-architecture-technique/ddl/wms-ddl.md`](../01-architecture-technique/ddl/wms-ddl.md) §5.bis.
 
 ## Investigation réalisée
 

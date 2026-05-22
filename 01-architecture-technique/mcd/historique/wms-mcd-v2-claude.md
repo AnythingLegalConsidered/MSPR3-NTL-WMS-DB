@@ -21,7 +21,7 @@ related:
 
 # 01 — MCD WMS-DB v2 (proposition Claude — Merise pur)
 
-> **Objectif** : variante du MCD v0.8 ([`wms-mcd.md`](wms-mcd.md)) corrigeant les ambiguïtés de nommage d'associations en passant à une **association ternaire** `stockage(ARTICLE, EMPLACEMENT, STOCK)` au lieu de deux associations binaires `stocke_dans` + `porte`.
+> **Objectif** : variante du MCD v0.8 ([`../wms-mcd.md`](../wms-mcd.md)) corrigeant les ambiguïtés de nommage d'associations en passant à une **association ternaire** `stockage(ARTICLE, EMPLACEMENT, STOCK)` au lieu de deux associations binaires `stocke_dans` + `porte`.
 
 ## 1. Différences avec v0.8
 
@@ -51,7 +51,7 @@ Le passage en ternaire :
 
 ### 3.1 Entités (7) — inchangées
 
-Voir [`wms-mcd.md`](wms-mcd.md) §3.1. Mêmes entités, mêmes attributs.
+Voir [`../wms-mcd.md`](../wms-mcd.md) §3.1. Mêmes entités, mêmes attributs.
 
 ### 3.2 Associations et cardinalités
 

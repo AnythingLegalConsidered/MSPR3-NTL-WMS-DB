@@ -15,15 +15,15 @@ related:
   - "./wms-mcd.svg"
   - "./wms-mcd.png"
   - "./mcd-operationnel.md"
-  - "./convergence/convergence-mcd-v2.md"
-  - "./convergence/arbitrages-v4-ianis.md"
-  - "./propositions/wms-mcd-v3-gpt.md"
-  - "./ressources/sujet-mspr3.pdf"
+  - "./arbitrages-v4-ianis.md"
+  - "./historique/convergence-mcd-v2.md"
+  - "./historique/wms-mcd-v3-gpt.md"
+  - "../../ressources/sujet-mspr3.pdf"
 ---
 
 # MCD WMS-DB — V4 officielle
 
-> Version officielle après convergence Claude × GPT (V3) puis arbitrages Ianis sur 5 points d'attaque soutenance (V4). Elle remplace la V3 du 2026-05-21 matin. Historique complet dans [`convergence/arbitrages-v4-ianis.md`](convergence/arbitrages-v4-ianis.md).
+> Version officielle après convergence Claude × GPT (V3) puis arbitrages Ianis sur 5 points d'attaque soutenance (V4). Elle remplace la V3 du 2026-05-21 matin. Historique complet dans [`arbitrages-v4-ianis.md`](arbitrages-v4-ianis.md).
 
 ## 1. Décisions intégrées
 

@@ -93,7 +93,14 @@ quelque chose n'est pas clair plutôt que d'inventer.
 Les fichiers de ce dossier sont des **copies** des originaux du repo. Si une décision change ou un fichier est mis à jour, recopie-le depuis la racine du projet vers ce dossier :
 
 ```powershell
-Copy-Item ..\wms-mcd.md, ..\wms-mld.md, ..\wms-ddl.md, ..\FAQ.md, `
-  ..\convergence\arbitrages-v4-ianis.md, ..\ddl\wms-schema.sql, `
-  ..\wms-mcd.png, ..\ressources\sujet-mspr3.pdf -Destination . -Force
+Copy-Item `
+  ..\01-architecture-technique\mcd\wms-mcd.md, `
+  ..\01-architecture-technique\mcd\wms-mcd.png, `
+  ..\01-architecture-technique\mcd\arbitrages-v4-ianis.md, `
+  ..\01-architecture-technique\mld\wms-mld.md, `
+  ..\01-architecture-technique\ddl\wms-ddl.md, `
+  ..\01-architecture-technique\ddl\wms-schema.sql, `
+  ..\FAQ.md, `
+  ..\ressources\sujet-mspr3.pdf `
+  -Destination . -Force
 ```

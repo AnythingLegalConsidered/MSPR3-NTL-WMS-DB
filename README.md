@@ -23,19 +23,17 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 
 | Livrable | Statut |
 |---|---|
-| MCD officiel ([`wms-mcd.md`](wms-mcd.md)) | ✅ v4.0-final — revue critique 5 attaques soutenance + arbitrages Ianis |
-| MCD soutenance ([`mcd-operationnel.md`](mcd-operationnel.md)) | ✅ version courte V4 officielle |
-| MLD ([`wms-mld.md`](wms-mld.md)) | 🟡 draft v1 |
-| DDL MariaDB 11.4 LTS ([`wms-ddl.md`](wms-ddl.md) + [`ddl/wms-schema.sql`](ddl/wms-schema.sql)) | ✅ draft v1 — exécuté et 8 tests positifs/négatifs validés sur MariaDB 11.4.10 |
-| Justification SGBD | ⏳ |
-| HA/PRA (Galera) | ⏳ |
-| Sécurité accès | ⏳ |
-| Supervision (5 KPIs) | ⏳ |
-| Logs | ⏳ |
-| RunBook exploitation | ⏳ |
-| Pilotage projet | ⏳ |
-| Note CODIR | ⏳ |
-| Soutenance | ⏳ |
+| **Livrable 1** — Architecture technique ([`01-architecture-technique/`](01-architecture-technique/)) | 🟡 en cours (MCD ✅, MLD ✅ draft, DDL ✅ testé, reste justif SGBD + politiques) |
+| **Livrable 2** — Plan de Reprise d'Activité ([`02-pra/`](02-pra/)) | ⏳ |
+| **Livrable 3** — Guide de supervision ([`03-supervision/`](03-supervision/)) | ⏳ |
+| **Livrable 4** — Démarche d'optimisation BDD ([`04-optimisation/`](04-optimisation/)) | ⏳ |
+| **Livrable 5** — RunBook d'exploitation ([`05-runbook/`](05-runbook/)) | ⏳ |
+| **Livrable 6** — Analyse de logs ([`06-analyse-logs/`](06-analyse-logs/)) | ⏳ |
+| **Livrable 7** — Gestion de projet ([`07-gestion-projet/`](07-gestion-projet/)) | 🟡 journal décisions + registre risques amorcés |
+| **Livrable 8** — Note Comité de direction ([`08-note-direction/`](08-note-direction/)) | ⏳ |
+| **Livrable 9** — Soutenance ([`09-soutenance/`](09-soutenance/)) | ⏳ |
+
+Détail par livrable dans le `README.md` de chaque dossier. Vue d'ensemble équipe : [`EQUIPE.md`](EQUIPE.md). FAQ soutenance : [`FAQ.md`](FAQ.md). Historique changements : [`CHANGELOG.md`](CHANGELOG.md). Décisions structurantes : [`07-gestion-projet/journal-decisions.md`](07-gestion-projet/journal-decisions.md) + détail dans [`decisions/`](decisions/).
 
 ## Décisions de cadrage
 

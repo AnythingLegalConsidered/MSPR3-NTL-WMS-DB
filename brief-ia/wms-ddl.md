@@ -10,14 +10,14 @@ contributors: ["Ianis"]
 created: "2026-05-22"
 updated: "2026-05-22"
 related:
-  - "./wms-mld.md"
-  - "./wms-mcd.md"
-  - "./ddl/wms-schema.sql"
+  - "../mld/wms-mld.md"
+  - "../mcd/wms-mcd.md"
+  - "./wms-schema.sql"
 ---
 
 # DDL WMS-DB — MariaDB 11.4 LTS
 
-> Matérialisation exécutable du MLD V1. Script unique : [`ddl/wms-schema.sql`](ddl/wms-schema.sql). Ce document explique comment l'exécuter, le tester, et les choix techniques associés.
+> Matérialisation exécutable du MLD V1. Script unique : [`wms-schema.sql`](wms-schema.sql). Ce document explique comment l'exécuter, le tester, et les choix techniques associés.
 
 ## 1. Conventions de nommage
 
@@ -33,7 +33,7 @@ Toutes les contraintes sont **explicitement nommées** (pas de nom auto-génér�
 
 ## 2. Ordre de création
 
-L'ordre dans `ddl/wms-schema.sql` respecte les dépendances FK :
+L'ordre dans `wms-schema.sql` respecte les dépendances FK :
 
 1. `clients` (indépendant)
 2. `fournisseurs` (indépendant)
@@ -54,13 +54,13 @@ docker run -d --name wms-mariadb \
   -p 3306:3306 \
   mariadb:11.4
 
-docker exec -i wms-mariadb mariadb -uroot -proot < ddl/wms-schema.sql
+docker exec -i wms-mariadb mariadb -uroot -proot < wms-schema.sql
 ```
 
 ### Cible client natif
 
 ```bash
-mariadb -u root -p < ddl/wms-schema.sql
+mariadb -u root -p < wms-schema.sql
 ```
 
 ### Vérification post-exécution

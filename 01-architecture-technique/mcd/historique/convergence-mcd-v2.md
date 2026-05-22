@@ -10,9 +10,9 @@ arbitre: "Ianis"
 related:
   - "./convergence-mcd-v2-history.md"
   - "./review-v2-par-gpt.md"
-  - "../propositions/wms-mcd-v2-claude.md"
-  - "../propositions/wms-mcd-v2-gpt.md"
-  - "../propositions/wms-mcd-v3-gpt.md"
+  - "./wms-mcd-v2-claude.md"
+  - "./wms-mcd-v2-gpt.md"
+  - "./wms-mcd-v3-gpt.md"
   - "../wms-mcd.md"
 created: "2026-05-21"
 updated: "2026-05-21"
@@ -26,7 +26,7 @@ updated: "2026-05-21"
 
 **10/10 convergés.** Arbitrages Ianis tranchés le 2026-05-21 (points 9 et 10).
 
-La proposition V3-GPT ([`../propositions/wms-mcd-v3-gpt.md`](../propositions/wms-mcd-v3-gpt.md)) a été promue dans le MCD officiel racine : [`../wms-mcd.md`](../wms-mcd.md).
+La proposition V3-GPT ([`./wms-mcd-v3-gpt.md`](./wms-mcd-v3-gpt.md)) a été promue dans le MCD officiel racine : [`../wms-mcd.md`](../wms-mcd.md).
 
 ## Décisions consensuelles (8)
 
