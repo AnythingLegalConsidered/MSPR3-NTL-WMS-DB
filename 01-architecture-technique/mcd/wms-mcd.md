@@ -1,174 +1,67 @@
 ---
 livrable: "01 — Architecture technique"
 scope: "01-architecture"
-section: "MCD WMS-DB V4 officielle"
-version: "4.0-final"
+section: "MCD WMS simplifié"
+version: "1.0"
 status: "valide"
 owner: "Ianis"
-reviewers: ["Blaise", "Zaid", "Ojvind"]
-contributors: ["Ianis"]
-ia_used: ["Claude Code", "GPT-5 Codex"]
-created: "2026-05-20"
-updated: "2026-05-21"
+created: "2026-05-22"
+updated: "2026-05-22"
 related:
-  - "./wms-mcd.mcd"
-  - "./wms-mcd.svg"
   - "./wms-mcd.png"
-  - "./mcd-operationnel.md"
-  - "./arbitrages-v4-ianis.md"
-  - "./historique/convergence-mcd-v2.md"
-  - "./historique/wms-mcd-v3-gpt.md"
-  - "../../ressources/sujet-mspr3.pdf"
+  - "../mld/wms-mld.md"
+  - "../ddl/wms-ddl.md"
 ---
 
-# MCD WMS-DB — V4 officielle
+# MCD WMS — version simplifiée
 
-> Version officielle après convergence Claude × GPT (V3) puis arbitrages Ianis sur 5 points d'attaque soutenance (V4). Elle remplace la V3 du 2026-05-21 matin. Historique complet dans [`arbitrages-v4-ianis.md`](arbitrages-v4-ianis.md).
+> Remplace la V4 du 2026-05-21 (archivée dans [`99-archive/01-architecture-technique-v1/`](../../99-archive/01-architecture-technique-v1/)). Choix d'un modèle compact (7 entités, 7 associations) pour la défense soutenance.
 
-## 1. Décisions intégrées
+Le schéma graphique de référence est `wms-mcd.png` (à déposer manuellement dans ce dossier).
 
-| Sujet | Décision finale |
-|---|---|
-| Périmètre | V1/V4 compacte à 8 entités : cœur WMS défendable en soutenance, FOURNISSEUR extrait. |
-| `ARTICLE` | Identifiant composite classique `(CODE_CLIENT, REFERENCE)`. Syntaxe Mocodo sans underscore (notation entité faible écartée). |
-| `STOCK` | **Entité réifiée dépendante** du couple `(ARTICLE, EMPLACEMENT)`. 2 associations binaires `stock_de` et `localise_dans` (ternaire `stockage` écartée pour lisibilité Merise). Unicité métier obligatoire au MLD : `UNIQUE(id_article, id_emplacement)`. |
-| Mouvement article | Association renommée `concerne` au lieu de `deplace_par`. |
-| Multi-tenant visible | Association directe `realise_pour CLIENT-MOUVEMENT` ajoutée pour rendre la séparation client visible au MCD (pas seulement dérivée via ARTICLE). |
-| Fournisseur | Extrait en entité `FOURNISSEUR` (référentiel global NTL). Association `fournit, 0N FOURNISSEUR, 01 ARTICLE` (optionnel — un article peut être créé sans fournisseur connu). |
-| Site des transactions | Pas d'association directe `SITE — MOUVEMENT` au MCD. Au MLD, `id_site` dénormalisé sur `mouvements` pour garantir TRANSFERT intra-site via FK composite déclarative. |
-| Ajustement | Pas d'ajustement global de site : tout `AJUSTEMENT` cible exactement un emplacement. Contrainte XOR portée au DDL via `CHECK ck_mvt_src_dst` (non Merisable en cardinalités). |
-| Transfert | `TRANSFERT` intra-site uniquement. Garantie déclarative via FK composite `(id_depart, id_site)` et `(id_arrivee, id_site)` vers `emplacements`. |
-| Séparation client | Option D : FK composite déclarative `(id_article, id_client)` vers `articles(id_article, id_client)` au MLD/DDL. |
+## 1. Entités (7)
 
-## 2. Entités (8)
+| # | Entité | Identifiant | Attributs |
+|---|---|---|---|
+| 1 | `ARTICLE` | `id_article` | `nom`, `poids`, `fournisseur`, `type` |
+| 2 | `CLIENT` | `id_client` | `nom`, `siret`, `telephone`, `status` |
+| 3 | `STOCK` | `id_stock` | `quantité` |
+| 4 | `LOCALISATION` | `id_localisation` | `code`, `zone`, `allée`, `étage`, `place` |
+| 5 | `SITE` | `id_site` | `libelle`, `adresse` |
+| 6 | `UTILISATEUR` | `id_utilisateur` | `nom`, `role` |
+| 7 | `MOUVEMENT` | `id_mouvement` | `type`, `reference`, `date`, `heure` |
 
-| # | Entité | Rôle opérationnel | Identifiant Merise | Attributs métier |
-|---|---|---|---|---|
-| 1 | `CLIENT` | Donneur d'ordre B2B propriétaire du catalogue | `CODE_CLIENT` | raison_sociale, siret, contact_nom, contact_email, adresse, status |
-| 2 | `ARTICLE` | Référence produit rattachée à un client | `(CODE_CLIENT, REFERENCE)` | libelle, poids, longueur, largeur, hauteur |
-| 3 | `FOURNISSEUR` | Référentiel global NTL des fournisseurs | `CODE_FOURNISSEUR` | raison_sociale |
-| 4 | `SITE` | Site physique NTL | `CODE_SITE` | nom, adresse |
-| 5 | `EMPLACEMENT` | Localisation physique dans un site | `CODE` | zone, allee, etagere, niveau, type_emplacement |
-| 6 | `STOCK` | État courant d'un article dans un emplacement (entité réifiée dépendante) | `ID_STOCK` (surrogate) | quantite, date_maj |
-| 7 | `MOUVEMENT` | Journal horodaté des entrées, sorties, transferts et ajustements | `NUMERO_MVT` | type_mouvement, quantite, date_mouvement |
-| 8 | `UTILISATEUR` | Opérateur ou administrateur WMS | `LOGIN` | nom, prenom, role |
+## 2. Associations (7)
 
-`ARTICLE` aurait pu être modélisé comme entité faible relative à `CLIENT` en Merise pur. La V4 garde l'identifiant composite classique car la règle `(CODE_CLIENT, REFERENCE)` reste directement lisible sur le diagramme et plus simple à défendre comme « PK composite » qu'« entité faible avec association `_11` ».
+| Association | Entité A | Card. A | Entité B | Card. B | Nature |
+|---|---|---|---|---|---|
+| `COMMANDE` | CLIENT | 0,N | ARTICLE | 1,N | N-N (table associative) |
+| `CONTENIR` (article–stock) | ARTICLE | 1,N | STOCK | 0,N | N-N (table associative) |
+| `CONTENIR` (stock–localisation) | STOCK | 1,1 | LOCALISATION | 1,N | 1-N (FK côté STOCK) |
+| `CONTENIR` (localisation–site) | LOCALISATION | 1,1 | SITE | 1,N | 1-N (FK côté LOCALISATION) |
+| `ECHANGER` | CLIENT | 1,1 | UTILISATEUR | 1,N | 1-N (FK côté CLIENT) |
+| `EFFECTUER` | STOCK | 0,1 | MOUVEMENT | 1,1 | 1-N pragmatique (FK côté MOUVEMENT) — voir §3 |
+| `REALISER` | UTILISATEUR | 0,N | MOUVEMENT | 1,1 | 1-N (FK côté MOUVEMENT) |
 
-`STOCK` est une **entité réifiée dépendante** du couple `(ARTICLE, EMPLACEMENT)` : ce n'est pas une entité indépendante (un STOCK n'existe pas sans un article ni sans un emplacement), mais on lui donne un identifiant technique `ID_STOCK` pour qu'elle soit référençable simplement par l'application. L'unicité métier `(ARTICLE, EMPLACEMENT)` reste obligatoire et matérialisée au MLD par `UNIQUE(id_article, id_emplacement)`.
+## 3. Écarts d'interprétation pour le passage au MLD
 
-`FOURNISSEUR` est un **référentiel mutualisé** au niveau NTL : tous les clients piochent dans la même liste de fournisseurs. Choix opérationnel assumé (simplicité de gestion référentielle) ; un modèle scoped par client serait plus rigoureux multi-tenant mais inutilement complexe pour le périmètre V1.
+Deux cardinalités du MCD posent des contraintes peu réalistes en production. Choix retenus pour le DDL :
 
-## 3. Associations (10)
+| Association MCD | Lecture stricte | Choix MLD/DDL | Justification |
+|---|---|---|---|
+| `EFFECTUER` STOCK (0,1) — MOUVEMENT (1,1) | Un stock ne peut être impacté que par 1 mouvement (toute sa vie) | FK `id_stock` non-UNIQUE dans `mouvement` | Un stock subit N mouvements (entrée, sortie, ajustement…). Strict UNIQUE bloquerait toute traçabilité. |
+| `CONTENIR` ARTICLE (1,N) — STOCK (0,N) | N-N classique | Table associative `article_stock` avec `date_ajout` | Permet historiser quand un article a été rattaché à un emplacement de stock. |
 
-| Association | Type | Entités liées | Cardinalités Merise | Règle métier |
-|---|---|---|---|---|
-| `possede` | binaire | `CLIENT` — `ARTICLE` | `(0,N)` — `(1,1)` | un article appartient à un seul client |
-| `fournit` | binaire | `FOURNISSEUR` — `ARTICLE` | `(0,N)` — `(0,1)` | un article peut être fourni par 0 ou 1 fournisseur (optionnel) |
-| `contient` | binaire | `SITE` — `EMPLACEMENT` | `(1,N)` — `(1,1)` | chaque emplacement appartient à un seul site |
-| `stock_de` | binaire | `ARTICLE` — `STOCK` | `(0,N)` — `(1,1)` | chaque ligne de stock concerne exactement un article |
-| `localise_dans` | binaire | `EMPLACEMENT` — `STOCK` | `(0,N)` — `(1,1)` | chaque ligne de stock est dans exactement un emplacement |
-| `concerne` | binaire | `ARTICLE` — `MOUVEMENT` | `(0,N)` — `(1,1)` | chaque mouvement concerne un seul article |
-| `realise_pour` | binaire | `CLIENT` — `MOUVEMENT` | `(0,N)` — `(1,1)` | chaque mouvement est réalisé pour le compte d'un client (traçabilité multi-tenant explicite) |
-| `effectue` | binaire | `UTILISATEUR` — `MOUVEMENT` | `(0,N)` — `(1,1)` | chaque mouvement est saisi par un utilisateur |
-| `depart` | binaire | `EMPLACEMENT` — `MOUVEMENT` | `(0,N)` — `(0,1)` | emplacement source optionnel selon le type de mouvement |
-| `arrivee` | binaire | `EMPLACEMENT` — `MOUVEMENT` | `(0,N)` — `(0,1)` | emplacement destination optionnel selon le type de mouvement |
+Ces écarts sont signalés au jury à l'oral : MCD = vision conceptuelle métier, MLD = vision implémentable.
 
-Le cycle apparent `CLIENT — possede — ARTICLE — concerne — MOUVEMENT — realise_pour — CLIENT` est **assumé volontairement** : `realise_pour` n'est pas une redondance dérivable, c'est une contrainte de traçabilité explicite. La cohérence entre les deux chemins (via ARTICLE et via `realise_pour`) est verrouillée au MLD par la FK composite option D (`mouvements(id_article, id_client) → articles(id_article, id_client)`).
+## 4. Règles de gestion appliquées
 
-## 4. Règles à descendre au MLD/DDL
+- **RG1** : un article appartient à au moins un client (commande). Un nouvel article sans commande n'est pas modélisable côté MCD (cardinalité 1,N obligatoire côté ARTICLE).
+- **RG2** : un stock est toujours localisé sur exactement une localisation (cardinalité 1,1 côté STOCK).
+- **RG3** : une localisation appartient à exactement un site (cardinalité 1,1 côté LOCALISATION).
+- **RG4** : chaque client est géré par un utilisateur unique (gestionnaire de compte).
+- **RG5** : chaque mouvement est tracé par un utilisateur unique (responsabilité opérationnelle).
 
-- `articles` : `PRIMARY KEY(id_article)`, `UNIQUE(id_client, reference)`, `UNIQUE(id_article, id_client)` (pour la FK composite option D).
-- `articles.id_fournisseur` : FK simple vers `fournisseurs(id_fournisseur)`, nullable (cardinalité `01`).
-- `stocks` : `UNIQUE(id_article, id_emplacement)` pour garantir une seule ligne de stock courant par couple article/emplacement.
-- `stocks` et `mouvements` : FK composite `(id_article, id_client) REFERENCES articles(id_article, id_client)` pour empêcher une incohérence client/article (option D).
-- `mouvements.id_client` : matérialise l'association `realise_pour` et participe à la FK composite ci-dessus. Une seule colonne, pas de duplication.
-- `mouvements.id_site` : **colonne dénormalisée** portant le site dérivé de l'emplacement. Garantit la règle TRANSFERT intra-site via FK composite déclarative.
-- `emplacements` : `UNIQUE(id_emplacement, id_site)` pour permettre les FK composites depuis `mouvements`.
-- `mouvements` FK composites :
-  - `(id_depart, id_site) REFERENCES emplacements(id_emplacement, id_site)` si depart non NULL ;
-  - `(id_arrivee, id_site) REFERENCES emplacements(id_emplacement, id_site)` si arrivee non NULL ;
-  - → garantit déclarativement que tout emplacement renseigné appartient au site du mouvement, donc TRANSFERT intra-site.
-- `mouvements.type_mouvement` :
-  - `ENTREE` : `depart` NULL, `arrivee` NOT NULL ;
-  - `SORTIE` : `depart` NOT NULL, `arrivee` NULL ;
-  - `TRANSFERT` : `depart` NOT NULL, `arrivee` NOT NULL, `depart <> arrivee` (intra-site garanti par les FK composites) ;
-  - `AJUSTEMENT` : exactement un des deux emplacements est renseigné (XOR).
-- Contrainte conditionnelle XOR pour AJUSTEMENT et combinaisons type/depart/arrivee : portée par `CHECK ck_mvt_src_dst` (non Merisable en cardinalités classiques).
+## 5. Diagramme
 
-## 5. Source Mocodo
-
-Source : [`wms-mcd.mcd`](wms-mcd.mcd)
-
-```mocodo
-FOURNISSEUR: CODE_FOURNISSEUR, raison_sociale
-fournit, 0N FOURNISSEUR, 01 ARTICLE
-:
-:
-:
-:
-
-possede, 0N CLIENT, 11 ARTICLE
-ARTICLE: CODE_CLIENT, REFERENCE, libelle, poids, longueur, largeur, hauteur
-stock_de, 0N ARTICLE, 11 STOCK
-STOCK: ID_STOCK, quantite, date_maj
-:
-:
-
-CLIENT: CODE_CLIENT, raison_sociale, siret, contact_nom, contact_email, adresse, status
-concerne, 0N ARTICLE, 11 MOUVEMENT
-:
-localise_dans, 0N EMPLACEMENT, 11 STOCK
-:
-:
-
-realise_pour, 0N CLIENT, 11 MOUVEMENT
-MOUVEMENT: NUMERO_MVT, type_mouvement, quantite, date_mouvement
-arrivee, 0N EMPLACEMENT, 01 MOUVEMENT
-EMPLACEMENT: CODE, zone, allee, etagere, niveau, type_emplacement
-contient, 1N SITE, 11 EMPLACEMENT
-SITE: CODE_SITE, nom, adresse
-
-UTILISATEUR: LOGIN, nom, prenom, role
-effectue, 0N UTILISATEUR, 11 MOUVEMENT
-depart, 0N EMPLACEMENT, 01 MOUVEMENT
-:
-:
-:
-```
-
-Rendus générés : [`wms-mcd.svg`](wms-mcd.svg) et [`wms-mcd.png`](wms-mcd.png). Layout testé sans chevauchement avec `--detect_overlaps`.
-
-Commande de régénération :
-
-```powershell
-python -m mocodo --input wms-mcd.mcd --output_dir . --svg_to png --detect_overlaps
-```
-
-## 6. Domaines de valeurs
-
-Les attributs typés ci-dessous sont contraints au DDL via `CHECK IN (...)` (non Merisables au MCD).
-
-| Attribut | Valeurs autorisées |
-|---|---|
-| `CLIENT.status` | `actif`, `suspendu`, `resilie` |
-| `UTILISATEUR.role` | `operateur`, `cariste`, `admin` |
-| `EMPLACEMENT.type_emplacement` | `rack`, `picking`, `masse`, `quai` |
-| `MOUVEMENT.type_mouvement` | `ENTREE`, `SORTIE`, `TRANSFERT`, `AJUSTEMENT` |
-
-Les timestamps techniques (`created_at`, `updated_at`) sont ajoutés au DDL par convention universelle sur toutes les tables, hors scope MCD conceptuel.
-
-## 7. Limites assumées
-
-Cette V4 reste un cœur WMS compact (8 entités). Hors périmètre : lots/DLC/FEFO, commandes, réceptions/expéditions détaillées, transporteurs, réservation de stock, destinataires finaux.
-
-Ces objets sont des évolutions V2 fonctionnelles, pas des oublis du MCD de soutenance.
-
-## 8. Historique versions
-
-| Version | Date | Changements clés |
-|---|---|---|
-| 0.7 | 2026-05-20 | Complétion MCD avec `tracable_pour` et `porte_pour` (verrou MLD redondant) |
-| 3.0-gpt | 2026-05-21 | Convergence Claude × GPT, 8 points consensuels, 2 arbitrages Ianis ouverts |
-| 3.1-final | 2026-05-21 | V3 matérialisée à la racine, arbitrages points 9 et 10 tranchés |
-| **4.0-final** | **2026-05-21** | **Revue critique 5 attaques soutenance + arbitrages Ianis : STOCK 2 binaires, FOURNISSEUR extrait, `realise_pour` réintroduit, `id_site` dénormalisé pour TRANSFERT intra-site déclaratif** |
+Le diagramme graphique (PNG) doit être déposé en `wms-mcd.png`. Source originale : capture de l'outil de modélisation utilisé en réunion équipe le 2026-05-22.

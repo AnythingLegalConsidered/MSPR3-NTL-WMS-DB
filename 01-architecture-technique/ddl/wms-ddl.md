@@ -1,154 +1,148 @@
 ---
 livrable: "01 — Architecture technique"
 scope: "01-architecture"
-section: "DDL WMS-DB — script MariaDB 11.4 LTS"
-version: "1.0-draft"
-status: "draft"
+section: "DDL MariaDB 11.4"
+version: "1.0"
+status: "à tester"
 owner: "Ianis"
-reviewers: ["Blaise", "Zaid", "Ojvind"]
-contributors: ["Ianis"]
 created: "2026-05-22"
 updated: "2026-05-22"
 related:
+  - "./wms-schema.sql"
   - "../mld/wms-mld.md"
   - "../mcd/wms-mcd.md"
-  - "./wms-schema.sql"
 ---
 
-# DDL WMS-DB — MariaDB 11.4 LTS
+# DDL WMS — MariaDB 11.4
 
-> Matérialisation exécutable du MLD V1. Script unique : [`wms-schema.sql`](wms-schema.sql). Ce document explique comment l'exécuter, le tester, et les choix techniques associés.
+> Implémentation SQL du MLD simplifié. Script unique : [`wms-schema.sql`](wms-schema.sql).
 
-## 1. Conventions de nommage
+## 1. Cible technique
 
-| Préfixe | Type | Exemple |
-|---|---|---|
-| `pk_` | Primary key | `pk_clients` |
-| `uk_` | Unique key | `uk_articles_client_ref` |
-| `fk_` | Foreign key | `fk_mouvements_depart_site` |
-| `ck_` | Check constraint | `ck_mvt_src_dst` |
-| `ix_` | Index additionnel | `ix_mouvements_client_date` |
-
-Toutes les contraintes sont **explicitement nommées** (pas de nom auto-généré InnoDB) pour faciliter l'identification dans les logs d'erreur et les futurs `ALTER`.
+| Élément | Valeur |
+|---|---|
+| SGBD | MariaDB 11.4 LTS |
+| Moteur de stockage | InnoDB (FK + transactions ACID) |
+| Charset | `utf8mb4` |
+| Collation | `utf8mb4_unicode_ci` |
+| Contraintes CHECK | Supportées nativement depuis MariaDB 10.2 |
 
 ## 2. Ordre de création
 
-L'ordre dans `wms-schema.sql` respecte les dépendances FK :
+L'ordre est imposé par les dépendances FK :
 
-1. `clients` (indépendant)
-2. `fournisseurs` (indépendant)
-3. `sites` (indépendant)
-4. `utilisateurs` (indépendant)
-5. `articles` (FK → clients, fournisseurs)
-6. `emplacements` (FK → sites)
-7. `stocks` (FK composite → articles, FK → emplacements)
-8. `mouvements` (FK composite → articles, FK → sites/utilisateurs, FK composites → emplacements)
+1. `site` (racine, aucune FK)
+2. `localisation` → FK `site`
+3. `utilisateur` (racine)
+4. `client` → FK `utilisateur`
+5. `article` (racine)
+6. `stock` → FK `localisation`
+7. `mouvement` → FK `stock`, `utilisateur`
+8. `commande` (associative) → FK `client`, `article`
+9. `article_stock` (associative) → FK `article`, `stock`
 
-## 3. Exécution
+Le script utilise `SET FOREIGN_KEY_CHECKS = 0` pour le DROP préliminaire afin de pouvoir purger dans n'importe quel ordre.
 
-### Cible Docker (recommandé pour tests locaux)
+## 3. Contraintes appliquées
+
+### 3.1 Clés primaires
+Toutes auto-incrémentées `INT UNSIGNED` sauf `article_stock` (PK composite `(id_article, id_stock)`).
+
+### 3.2 Clés étrangères
+
+| Table | Colonne | Référence | ON DELETE | Raison |
+|---|---|---|---|---|
+| `localisation` | `id_site` | `site(id_site)` | RESTRICT | Refus suppression d'un site avec localisations |
+| `client` | `id_utilisateur` | `utilisateur(id_utilisateur)` | RESTRICT | Un gestionnaire ne peut être supprimé s'il a des clients |
+| `stock` | `id_localisation` | `localisation(id_localisation)` | RESTRICT | Pas de stock orphelin |
+| `mouvement` | `id_stock` | `stock(id_stock)` | SET NULL | Si stock supprimé, l'historique des mouvements reste (traçabilité) |
+| `mouvement` | `id_utilisateur` | `utilisateur(id_utilisateur)` | RESTRICT | Traçabilité humaine obligatoire |
+| `commande` | `id_client`, `id_article` | client / article | RESTRICT | Protection métier |
+| `article_stock` | `id_article`, `id_stock` | article / stock | CASCADE | Lien d'association : se purge avec les entités liées |
+
+### 3.3 Contraintes UNIQUE
+
+| Table | Colonne(s) | Justification |
+|---|---|---|
+| `localisation` | `code` | Code physique unique d'emplacement |
+| `client` | `siret` | Identifiant légal unique |
+| `mouvement` | `reference` | Numéro de traçabilité métier |
+
+### 3.4 Contraintes CHECK
+
+| Table | Nom | Règle |
+|---|---|---|
+| `article` | `ck_article_poids` | `poids > 0` |
+| `commande` | `ck_commande_quantite` | `quantite_commandee > 0` |
+| `mouvement` | `ck_mouvement_type` | `type IN ('entree','sortie','ajustement','transfert')` |
+
+## 4. Index secondaires
+
+Tous les index FK sont créés explicitement (MariaDB les crée automatiquement avec une FK mais on les nomme pour cohérence et maintenance) :
+
+- `idx_localisation_site`
+- `idx_client_utilisateur`
+- `idx_stock_localisation`
+- `idx_mouvement_date` ← reporting journalier
+- `idx_mouvement_stock`
+- `idx_mouvement_utilisateur`
+- `idx_commande_client`
+- `idx_commande_article`
+- `idx_article_stock_stock`
+
+## 5. Exécution
 
 ```bash
-docker run -d --name wms-mariadb \
-  -e MARIADB_ROOT_PASSWORD=root \
-  -p 3306:3306 \
-  mariadb:11.4
+# Connexion MariaDB
+mysql -h <host> -u <user> -p
 
-docker exec -i wms-mariadb mariadb -uroot -proot < wms-schema.sql
+# Création de la base
+CREATE DATABASE wms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE wms;
+
+# Exécution du script
+SOURCE 01-architecture-technique/ddl/wms-schema.sql;
+
+# Vérification
+SHOW TABLES;
+-- Attendu : 9 tables
+--   article, article_stock, client, commande, localisation,
+--   mouvement, site, stock, utilisateur
 ```
 
-### Cible client natif
-
-```bash
-mariadb -u root -p < wms-schema.sql
-```
-
-### Vérification post-exécution
+## 6. Vérifications post-exécution
 
 ```sql
-USE wms;
-SHOW TABLES;
--- Attendu : 8 tables (articles, clients, emplacements, fournisseurs,
---                    mouvements, sites, stocks, utilisateurs)
+-- Compter les tables (attendu : 9)
+SELECT COUNT(*) AS nb_tables
+FROM information_schema.tables
+WHERE table_schema = 'wms';
 
-SELECT
-  TABLE_NAME,
-  CONSTRAINT_NAME,
-  CONSTRAINT_TYPE
-FROM information_schema.TABLE_CONSTRAINTS
-WHERE TABLE_SCHEMA = 'wms'
-ORDER BY TABLE_NAME, CONSTRAINT_TYPE;
+-- Vérifier les FK (attendu : 9 contraintes FK)
+SELECT COUNT(*) AS nb_fk
+FROM information_schema.referential_constraints
+WHERE constraint_schema = 'wms';
+
+-- Vérifier les CHECK (attendu : 3)
+SELECT COUNT(*) AS nb_check
+FROM information_schema.check_constraints
+WHERE constraint_schema = 'wms';
 ```
 
-## 4. Tests de validation (à écrire dans un script séparé)
+## 7. Écarts vs MCD strict
 
-Le DDL est correct si les insertions suivantes se comportent comme attendu :
+| Élément | MCD | DDL | Raison |
+|---|---|---|---|
+| `mouvement.id_stock` | UNIQUE (cardinalité 0,1 côté STOCK) | NON-UNIQUE | Permet l'historique de mouvements sur un même stock |
+| `article_stock` | Association pure N-N | Table avec attribut `date_ajout` | Traçabilité des affectations |
+| Accents attributs | `quantité`, `allée`, `étage` | `quantite`, `allee`, `etage` | Compat ASCII / scripts portables |
 
-### Tests positifs (doivent réussir)
+## 8. Statut tests
 
-- Insertion d'un client `actif`, d'un article rattaché, d'un emplacement rack dans un site
-- Création d'un stock `quantite = 50` sur ce couple article/emplacement
-- Mouvement ENTREE (`id_depart` NULL, `id_arrivee` renseigné)
-- Mouvement TRANSFERT entre 2 emplacements du même site
+À ce stade le script n'a **pas encore** été exécuté sur MariaDB 11.4. À faire :
 
-### Tests négatifs (doivent échouer)
-
-| Cas | Erreur attendue |
-|---|---|
-| Client avec `status = 'inconnu'` | rejet ENUM |
-| 2 articles avec même `(id_client, reference)` | violation `uk_articles_client_ref` |
-| 2 stocks sur même `(id_article, id_emplacement)` | violation `uk_stocks_article_emplacement` |
-| Stock avec `id_article` et `id_client` incohérents (article appartient à un autre client) | violation `fk_stocks_article_client` (option D) |
-| Mouvement TRANSFERT entre 2 emplacements de sites différents | violation FK composite `fk_mouvements_depart_site` ou `fk_mouvements_arrivee_site` |
-| Mouvement ENTREE avec `id_depart` renseigné | violation `ck_mvt_src_dst` |
-| Mouvement TRANSFERT avec `id_depart = id_arrivee` | violation `ck_mvt_src_dst` |
-| Mouvement AJUSTEMENT avec les 2 emplacements renseignés | violation `ck_mvt_src_dst` |
-| Stock avec `quantite = -1` | violation `ck_stocks_quantite` |
-| Suppression d'un client référencé par un article | violation `fk_articles_client` (ON DELETE RESTRICT) |
-
-Ces tests seront formalisés dans `ddl/tests/` (livrable suivant).
-
-## 5. Choix techniques
-
-| Choix | Justification | Référence |
-|---|---|---|
-| `ENGINE=InnoDB` | seul moteur MariaDB transactionnel avec FK + ACID + Galera | `FAQ.md` |
-| `CHARSET=utf8mb4` | vrai UTF-8 (emoji, idéogrammes) — pas `utf8` 3 octets historique | `FAQ.md` |
-| `COLLATE=utf8mb4_unicode_ci` | tri Unicode correct, insensible à la casse | — |
-| `INT UNSIGNED` pour les PK | 4 octets, plage 0–4.2 milliards suffisante pour V1 et V2 | `wms-mld.md` §1 |
-| `TIMESTAMP` pour `date_*` | stockage UTC, conversion auto selon `time_zone` session | — |
-| `DECIMAL` pour poids/dimensions | pas de perte de précision (≠ FLOAT) | `wms-mld.md` §2.3 |
-| FK toutes en `ON DELETE RESTRICT` | protection de l'historique : suppression métier = soft-delete applicatif | `wms-mld.md` §4 |
-| Exception `articles.id_fournisseur` en `SET NULL` | fournisseur supprimé ne doit pas bloquer un article (cardinalité `01`) | `wms-mld.md` §4 |
-| Règle `ck_mvt_src_dst` portée par **triggers** au lieu de CHECK | bug parser MariaDB 11.4.10 : conflit entre FK composites `(id_depart, id_site)` / `(id_arrivee, id_site)` et tout CHECK référençant ces colonnes. FK composites prioritaires (verrouillent TRANSFERT intra-site), XOR XOR matérialisé par 2 triggers `BEFORE INSERT` + `BEFORE UPDATE` avec `SIGNAL SQLSTATE '45000'`. Sémantique identique. | §5.bis ci-dessous |
-
-### 5.bis Bug parser MariaDB 11.4 — investigation
-
-**Symptôme** : `ERROR 1901 (HY000): Function or expression 'id_depart' cannot be used in the CHECK clause of 'ck_mvt_src_dst'`.
-
-**Reproduction** : sur MariaDB 11.4.10-MariaDB-ubu2404, déclarer un CHECK référençant `id_depart` ou `id_arrivee` sur la table `mouvements` qui possède les FK composites `(id_depart, id_site) → emplacements` et `(id_arrivee, id_site) → emplacements` est systématiquement rejeté — que ce soit inline dans le `CREATE TABLE` ou via `ALTER TABLE` après création. Le bug est insensible à l'ordre des contraintes, à la complexité du CHECK (même un CHECK trivial à 1 branche est rejeté), et persiste après `DROP CONSTRAINT` puis ré-ajout.
-
-**Tests réalisés** :
-- CHECK seul sur table simplifiée (sans FK composites) → OK
-- CHECK + FK composites sur table simplifiée (sans timestamps) → OK
-- CHECK + FK composites + timestamps sur table complète → KO
-- Découpage en 4 CHECK par valeur d'ENUM → KO
-- Drop FK composites → ajout CHECK → re-add FK composites → CHECK invalidé au re-add
-
-**Arbitrage** : conserver les FK composites (décision V4 verrouillée, garantie déclarative TRANSFERT intra-site) et porter la règle XOR via triggers. Le coût est limité : 2 triggers symétriques BEFORE INSERT / BEFORE UPDATE, sémantique identique au CHECK initialement prévu (cf. `wms-mcd.md` §4 et `wms-mld.md` §6.1).
-
-**Évolution V2** : retester sur futures versions MariaDB (11.5+, 12.x) ; si le bug est corrigé, revenir au CHECK déclaratif.
-
-## 6. Limites connues
-
-- **Pas de partitioning** sur `mouvements` : croissance linéaire, à reconsidérer au-delà de ~10M lignes (V2).
-- **2 triggers sur `mouvements`** (forcés par bug parser MariaDB 11.4, cf. §5.bis) : `tg_mvt_src_dst_ins` et `tg_mvt_src_dst_upd`. Pas de trigger sur la dénormalisation `mouvements.id_site` (renseigné par l'application). Risque d'incohérence si update SQL manuel direct sans passer par l'app — trigger additionnel envisageable en V2.
-- **ENUM rigide** : toute nouvelle valeur de statut/rôle/type nécessite `ALTER TABLE` (verrou court). Bascule vers tables de référence prévue V2 si volatilité prouvée.
-- **Pas de seed data** : le script crée le schéma vide. Un script `ddl/seed.sql` avec données NTL fictives est à produire pour la démo soutenance.
-
-## 7. Étapes suivantes
-
-- [ ] Script `ddl/tests/test-positifs.sql` + `ddl/tests/test-negatifs.sql`
-- [ ] Script `ddl/seed.sql` avec données NTL fictives (3 sites, ~5 clients, ~50 articles, ~200 emplacements, ~10 utilisateurs, ~500 mouvements)
-- [ ] Conteneur `docker-compose.yml` pour environnement de dev reproductible
-- [ ] Intégration au cluster Galera (livrable HA/PRA)
+- [ ] Exécution sur instance MariaDB 11.4 locale
+- [ ] Vérification des 3 CHECK (insérer poids=0, qté=0, type='foo' → doit échouer)
+- [ ] Vérification des FK (insérer FK invalide → doit échouer)
+- [ ] Test ON DELETE RESTRICT (tenter delete d'un site avec localisation → doit échouer)
+- [ ] Test ON DELETE SET NULL sur `mouvement.id_stock` (supprimer stock → mouvement.id_stock devient NULL)
