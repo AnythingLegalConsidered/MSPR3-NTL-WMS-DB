@@ -1,8 +1,8 @@
 # Livrable 8 — Note Comité de Direction
 
-**Statut** : ⏳ à faire
+**Statut** : 🟡 ébauche V1 livrée — [`note-direction.md`](note-direction.md) (à relire / arbitrer chiffrages)
 **Exigence sujet** : §II.3 « rédiger une note 'Comité de direction' (non technique) expliquant les risques cyber majeurs liés à la BDD, l'impact métier, et les mesures proposées (avec priorisation) » + §III.1 « Note de direction »
-**Owner** : à définir
+**Owner** : Ianis (V1) — relecture équipe à planifier
 
 ## Contenu attendu
 

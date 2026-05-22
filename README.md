@@ -30,7 +30,7 @@ Contraintes clés : **RTO 1h, RPO 15 min** · fenêtre de maintenance nocturne u
 | **Livrable 5** — RunBook d'exploitation ([`05-runbook/`](05-runbook/)) | ⏳ |
 | **Livrable 6** — Analyse de logs ([`06-analyse-logs/`](06-analyse-logs/)) | ⏳ |
 | **Livrable 7** — Gestion de projet ([`07-gestion-projet/`](07-gestion-projet/)) | 🟡 journal décisions + registre risques amorcés |
-| **Livrable 8** — Note Comité de direction ([`08-note-direction/`](08-note-direction/)) | ⏳ |
+| **Livrable 8** — Note Comité de direction ([`08-note-direction/`](08-note-direction/)) | 🟡 ébauche V1 livrée |
 | **Livrable 9** — Soutenance ([`09-soutenance/`](09-soutenance/)) | ⏳ |
 
 Détail par livrable dans le `README.md` de chaque dossier. Vue d'ensemble équipe : [`EQUIPE.md`](EQUIPE.md). FAQ soutenance : [`FAQ.md`](FAQ.md). Historique changements : [`CHANGELOG.md`](CHANGELOG.md). Décisions structurantes : [`07-gestion-projet/journal-decisions.md`](07-gestion-projet/journal-decisions.md) + détail dans [`decisions/`](decisions/).

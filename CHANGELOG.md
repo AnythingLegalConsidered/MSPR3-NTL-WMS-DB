@@ -4,6 +4,8 @@
 
 ## 2026-05-22
 
+- 📋 **Livrable 8 — Note Comité de direction ébauche V1** ([`08-note-direction/note-direction.md`](08-note-direction/note-direction.md)). 5 risques cyber vulgarisés, impacts métier chiffrés, plan P1/P2/P3, 4 décisions explicites demandées au CODIR.
+- 🔒 **SGBD acté : MariaDB 11.4 LTS** (vs MySQL 8.4 / PostgreSQL 16). Décision D05, ADR détaillé [`decisions/0002-sgbd-mariadb.md`](decisions/0002-sgbd-mariadb.md).
 - 🏗️ **Restructuration du repo en 9 dossiers de livrables** alignés sur le cahier des charges EPSI (§III). Chaque livrable a son `README.md` avec état, contenu attendu et point d'entrée.
 - 📋 Ajout du registre des risques [`07-gestion-projet/registre-risques.md`](07-gestion-projet/registre-risques.md) (9 risques) et du journal des décisions [`07-gestion-projet/journal-decisions.md`](07-gestion-projet/journal-decisions.md) (4 arbitrages majeurs documentés).
 - 🪲 **Bug parser MariaDB 11.4 découvert et contourné** pendant tests DDL. Règle XOR `ck_mvt_src_dst` portée par 2 triggers BEFORE INSERT/UPDATE. 8 tests fonctionnels valident l'équivalence sémantique. ADR ouvert : [`decisions/0001-bug-mariadb-check.md`](decisions/0001-bug-mariadb-check.md).
